@@ -2414,7 +2414,7 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 			return ret;
 		}
 
-		ret = cpufreq_exit_governor(policy);
+		ret = __cpufreq_governor(policy, CPUFREQ_GOV_POLICY_EXIT);
 		if (ret) {
 			pr_err("%s: Failed to Exit Governor: %s (%d)\n",
 			       __func__, old_gov->name, ret);
@@ -2426,12 +2426,11 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	policy->governor = new_policy->governor;
 	ret = cpufreq_governor(policy, CPUFREQ_GOV_POLICY_INIT);
 	if (!ret) {
-		ret = cpufreq_start_governor(policy);
-		if (!ret) {
-			pr_debug("cpufreq: governor change\n");
-			return 0;
-		}
-		cpufreq_exit_governor(policy);
+		ret = __cpufreq_governor(policy, CPUFREQ_GOV_START);
+		if (!ret)
+			goto out;
+
+		__cpufreq_governor(policy, CPUFREQ_GOV_POLICY_EXIT);
 	}
 
 	/* new governor failed, so re-start old one */
